@@ -5,7 +5,6 @@
 #include <QDebug>
 #include <QFile>
 #include <QPushButton>
-
 MessageBox::MessageBox(QWidget* parent):
   ModalWidget(parent),
   ui_ptr_(new Ui::MessageBox) {
@@ -18,6 +17,16 @@ MessageBox::~MessageBox() {
 
 void MessageBox::setBodySize(const QSize &size) {
   ui_ptr_->msg_body->setMinimumSize(size);
+}
+
+void MessageBox::resetButtonSize(const QSize &size) {
+  for (int i = 0; i < ui_ptr_->buttons_layout->count(); ++i) {
+    QWidget* b = ui_ptr_->buttons_layout->itemAt(i)->widget();
+    if (!b) {
+      continue;
+    }
+    b->setFixedSize(size);
+  }
 }
 
 void MessageBox::addAcceptButton(const QString &name){

@@ -19,6 +19,7 @@ public:
   QLabel* getDescription();
   void setBodySize(const QSize& size);
 
+  void resetButtonSize(const QSize& size);
   void hStackWidget(QWidget* w);
 
 public slots:

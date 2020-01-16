@@ -15,6 +15,7 @@ class WTTManager;
 namespace Ui
 {
   class MainWindow;
+  class MeshInfoLabel;
 }
 
 class MessageBox;
@@ -37,7 +38,10 @@ protected:
 public slots:
   void onUserAction(int);
   void onOpenGLLoadMesh();
-  void onMeshLoaded(QString err);
+  void onOpenGLReady();
+  void onMeshLoaded(BoundingBox b, QString err);
+
+  void onMeshReset();
   void onFWTLevelSet(int);
   void onIWTLevelSet(int);
 
@@ -49,11 +53,14 @@ public slots:
   void onCompressDone(QString msg);
   void onDenoiseDone(QString msg);
 
+  void onUpdateMeshInfo(int, int);
+
 signals:
   void openGLContextReady();
   void dataReady(const Mesh&);
 
   void loadMesh(QString filename);
+  void resetMesh();
   void setWTType(int);
 
   void doFWT(int type, int level);
@@ -63,6 +70,8 @@ signals:
 
 protected:
   Ui::MainWindow* ui_ptr_;
+  QWidget* info_label_;
+  Ui::MeshInfoLabel* info_label_ui_;
   OpenGLWidget* opengl_widget_ptr_;
   ActionPanel* action_panel_ptr_;
   MessageBox* proc_diag_ptr_;

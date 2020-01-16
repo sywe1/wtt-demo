@@ -15,14 +15,16 @@ public:
   enum VBO
   {
     POSITION = 0,
-    NORMAL = 1,
-    BARYCENTRIC = 2
+    VNORMAL = 1,
+    FNORMAL = 2,
+    BARYCENTRIC = 3
   };
+
 public:
   explicit TriangleMeshScene(QObject* parent = 0);
   virtual ~TriangleMeshScene();
 
-  virtual void render() override;
+  virtual void render(SHADINGTYPE type) override;
   virtual void init() override;
 
   virtual void setModelMat(const QMatrix4x4& model) override;
@@ -39,17 +41,13 @@ public:
                              unsigned int vbo) override;
 
   virtual void allocatePos(int count);
-  virtual void allocateNormal(int count);
-  /**
-   * \brief      Allocate data for barycentric vbo.
-   *
-   * \param[in]  data   Data starting point
-   * \param[in]  count  Count in bytes.
-   */
+  virtual void allocateVNormal(int count);
+  virtual void allocateFNormal(int count);
   virtual void allocateBC(int count);
 
   virtual void updatePos(int offset, const void* data, int count);
-  virtual void updateNormal(int offset, const void* data, int count);
+  virtual void updateVNormal(int offset, const void* data, int count);
+  virtual void updateFNormal(int offset, const void* data, int count);
   virtual void updateBC(int offset, const void* data, int count);
 
   virtual void setPrimitiveSize(std::size_t size) override;
@@ -66,6 +64,8 @@ protected:
   QOpenGLVertexArrayObject vao_;
   QOpenGLBuffer vpos_;
   QOpenGLBuffer vnormal_;
+
+  QOpenGLBuffer fnormal_;
   QOpenGLBuffer vbarycentric_;
 
   QMatrix4x4 model_;

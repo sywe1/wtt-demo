@@ -17,7 +17,7 @@ public:
   void setMax(int);
   void setMin(int);
   void setBodySize(const QSize& size);
-
+  void resetButtonSize(const QSize& size);
   void setDescription(const QString& d);
 
 public slots:

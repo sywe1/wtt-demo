@@ -8,10 +8,14 @@ class SceneObject: public QObject, public QOpenGLFunctions
 {
   Q_OBJECT
 public:
+  enum class SHADINGTYPE: int {
+    SMOOTH = 0,
+    FLAT = 1
+  };
   explicit SceneObject(QObject* parent = 0);
   virtual ~SceneObject();
 
-  virtual void render() = 0;
+  virtual void render(SHADINGTYPE type) = 0;
   virtual void init() = 0;
 
   virtual void renderEdge(bool) = 0;

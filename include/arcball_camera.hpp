@@ -2,11 +2,9 @@
 #define WTT_DEMO_INCLUDE_ARCBALL_CAMERA_HPP
 
 #include <QMatrix4x4>
-#include <QObject>
 
-class ArcballCamera: public QObject
+class ArcballCamera
 {
-  Q_OBJECT
 public:
   explicit ArcballCamera(const QVector3D& pos = QVector3D(0.0, 0.0, 0.0),
                          const QVector3D& focus = QVector3D(0.0, 0.0, 0.0),
@@ -38,7 +36,7 @@ protected:
   QVector3D pos_;
   QVector3D focus_;
   QVector3D up_;
-  qreal radius_;
+  double radius_;
 };
 
 

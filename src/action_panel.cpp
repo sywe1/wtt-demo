@@ -131,7 +131,7 @@ void ActionPanel::onOpenMeshDone(bool succ) {
   } else {
     ui_ptr_->reset_button->setDisabled(true);
   }
-  ui_ptr_->type_text->setText("");
+  ui_ptr_->type_icon->setPixmap(QPixmap(":/images/circle.png"));
   ui_ptr_->type_button->setDisabled(false);
   ui_ptr_->fwt_button->setDisabled(true);
   ui_ptr_->iwt_button->setDisabled(true);
@@ -142,9 +142,9 @@ void ActionPanel::onOpenMeshDone(bool succ) {
 
 void ActionPanel::onTypeSelected(int t) {
   if (t == 0) {
-    ui_ptr_->type_text->setText("L");
+    ui_ptr_->type_icon->setPixmap(QPixmap(":/images/loop.png"));
   } else {
-    ui_ptr_->type_text->setText("B");
+    ui_ptr_->type_icon->setPixmap(QPixmap(":/images/butterfly.png"));
   }
   ui_ptr_->fwt_button->setEnabled(true);
   ui_ptr_->iwt_button->setEnabled(true);

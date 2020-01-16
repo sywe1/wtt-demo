@@ -7,7 +7,7 @@ QWidget#msg_body
 QLineEdit#user_input {
   font-family: Roboto;
   font-weight: 400;
-  font-size: 50px;
+  font-size: 20pt;
   border: none;
   text-align: center;
   color:#DFDFDF;
@@ -18,7 +18,7 @@ QLabel#description
 {
   font-family: Roboto;
   font-weight: 400;
-  font-size: 30px;
+  font-size: 14pt;
   border: none;
   text-align: center;
   color:#DFDFDF;
@@ -28,12 +28,8 @@ QPushButton#accept_button
 {
   font-family: Roboto;
   font-weight: 450;
-  font-size: 22px;
+  font-size: 12pt;
   border: none;
-  min-height: 64;
-  max-height: 64;
-  min-width: 222;
-  max-width: 222;
   background-color: #3F51B5;
   color:#FFFFFF;
 }
@@ -42,12 +38,8 @@ QPushButton#reject_button
 {
   font-family: Roboto;
   font-weight: 450;
-  font-size: 22px;
+  font-size: 12pt;
   border: none;
-  min-height: 64;
-  max-height: 64;
-  min-width: 222;
-  max-width: 222;
   background-color: none;
   color:#FFFFFF;
 }

@@ -19,6 +19,7 @@ InputProp::InputProp(QWidget* parent):
   connect(ui_ptr_->accept_button, &QPushButton::clicked, this, &InputProp::accept);
   connect(ui_ptr_->reject_button, &QPushButton::clicked, this, &InputProp::reject);
   setDescription("Set compression rate (%) to");
+
   ui_ptr_->accept_button->setText("Confirm");
   ui_ptr_->reject_button->setText("Cancel");
 }
@@ -31,6 +32,15 @@ void InputProp::setBodySize(const QSize &size) {
   ui_ptr_->msg_body->setMinimumSize(size);
 }
 
+void InputProp::resetButtonSize(const QSize &size) {
+  for (int i = 0; i < ui_ptr_->buttons_layout->count(); ++i) {
+    QWidget* b = ui_ptr_->buttons_layout->itemAt(i)->widget();
+    if (!b) {
+      continue;
+    }
+    b->setFixedSize(size);
+  }
+}
 double InputProp::getValue() {
   QString txt = ui_ptr_->user_input->text();
   bool ok;
@@ -41,6 +51,8 @@ double InputProp::getValue() {
     return val;
   }
 }
+
+
 
 void InputProp::clearInput() {
   ui_ptr_->user_input->clear();

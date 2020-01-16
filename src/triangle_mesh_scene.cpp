@@ -6,6 +6,7 @@ TriangleMeshScene::TriangleMeshScene(QObject* parent)
 : SceneObject(parent),
   vpos_(QOpenGLBuffer::VertexBuffer),
   vnormal_(QOpenGLBuffer::VertexBuffer),
+  fnormal_(QOpenGLBuffer::VertexBuffer),
   vbarycentric_(QOpenGLBuffer::VertexBuffer),
   tri_size_(0),
   show_edge_(true),
@@ -19,15 +20,22 @@ TriangleMeshScene::TriangleMeshScene(QObject* parent)
 
 TriangleMeshScene::~TriangleMeshScene()
 {
+  vpos_.release();
   vpos_.destroy();
+  vnormal_.release();
   vnormal_.destroy();
+  fnormal_.release();
+  fnormal_.destroy();
+  vbarycentric_.release();
   vbarycentric_.destroy();
+  vao_.release();
+  vao_.destroy();
 }
 
 void TriangleMeshScene::renderEdge(bool on) {
   show_edge_ = on;
 }
-void TriangleMeshScene::render()
+void TriangleMeshScene::render(SHADINGTYPE type)
 {
   this->glsl_program_->bind();
   this->vao_.bind();
@@ -41,7 +49,11 @@ void TriangleMeshScene::render()
   this->glsl_program_->enableAttributeArray(pos_location);
   this->glsl_program_->setAttributeArray(pos_location, GL_FLOAT, 0, 3);
 
-  vnormal_.bind();
+  if (type == SHADINGTYPE::SMOOTH) {
+    vnormal_.bind();
+  } else {
+    fnormal_.bind();
+  }
   GLuint normal_location = this->glsl_program_->attributeLocation("v_normal");
   this->glsl_program_->enableAttributeArray(normal_location);
   this->glsl_program_->setAttributeArray(normal_location, GL_FLOAT, 0, 3);
@@ -72,7 +84,10 @@ void TriangleMeshScene::init()
     critical() << " Unable to create position VBO";
   }
   if (!vnormal_.create()){
-    critical() << " Unable to create normal VBO";
+    critical() << " Unable to create vertex normal VBO";
+  }
+  if (!fnormal_.create()) {
+    critical() << "Unable to create face nomral VBO";
   }
   if (!vbarycentric_.create()) {
     critical() << " Unable to create barycentric VBO";
@@ -152,21 +167,39 @@ void TriangleMeshScene::updatePos(int offset, const void *data, int count)
   }
 }
 
-void TriangleMeshScene::allocateNormal(int count)
+void TriangleMeshScene::allocateVNormal(int count)
 {
   if (vnormal_.bind()){
     vnormal_.allocate(count);
   } else {
-    critical() << "Unable to bind normal VBO while try to allocate normal buffer";
+    critical() << "Unable to bind vertex normal VBO while try to allocate vertex normal buffer";
   }
 }
 
-void TriangleMeshScene::updateNormal(int offset, const void *data, int count)
+void TriangleMeshScene::updateVNormal(int offset, const void *data, int count)
 {
   if (vnormal_.bind()){
     vnormal_.write(offset, data, count);
   } else {
-    critical() << "Unable to bind normal VBO while try to write normal buffer";
+    critical() << "Unable to bind vertex normal VBO while try to write vertex normal buffer";
+  }
+}
+
+void TriangleMeshScene::allocateFNormal(int count)
+{
+  if (fnormal_.bind()){
+    fnormal_.allocate(count);
+  } else {
+    critical() << "Unable to bind face normal VBO while try to allocate face normal buffer";
+  }
+}
+
+void TriangleMeshScene::updateFNormal(int offset, const void *data, int count)
+{
+  if (fnormal_.bind()){
+    fnormal_.write(offset, data, count);
+  } else {
+    critical() << "Unable to bind face normal VBO while try to write face normal buffer";
   }
 }
 
@@ -197,9 +230,14 @@ void TriangleMeshScene::allocateVboData(int count, unsigned int vbo)
       allocatePos(count);
       break;
     }
-    case VBO::NORMAL:
+    case VBO::VNORMAL:
     {
-      allocateNormal(count);
+      allocateVNormal(count);
+      break;
+    }
+    case VBO::FNORMAL:
+    {
+      allocateFNormal(count);
       break;
     }
     case VBO::BARYCENTRIC:
@@ -227,9 +265,14 @@ void TriangleMeshScene::updateVboData(int offset,
       updatePos(offset, data, count);
       break;
     }
-    case VBO::NORMAL:
+    case VBO::VNORMAL:
     {
-      updateNormal(offset, data, count);
+      updateVNormal(offset, data, count);
+      break;
+    }
+    case VBO::FNORMAL:
+    {
+      updateFNormal(offset, data, count);
       break;
     }
     case VBO::BARYCENTRIC:

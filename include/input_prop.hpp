@@ -15,6 +15,7 @@ public:
   double getValue();
   void setBodySize(const QSize& size);
 
+  void resetButtonSize(const QSize& size);
   void setDescription(const QString& d);
 
 public slots:

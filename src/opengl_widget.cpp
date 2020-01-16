@@ -1,30 +1,28 @@
-#include <opengl_widget.hpp>
-#include <triangle_mesh_scene.hpp>
+#include "opengl_widget.hpp"
+#include "glview_control_panel.hpp"
+#include "triangle_mesh_scene.hpp"
+#include "threaded_gl_buffer_uploader.hpp"
 
-#include <QDebug>
-#include <QOpenGLShaderProgram>
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include <QKeyEvent>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QLabel>
-#include <QScreen>
-#include <QApplication>
+#include <QOffscreenSurface>
 
 #include <cmath>
 #include <cassert>
 
 OpenGLWidget::OpenGLWidget(QWidget* parent):
 QOpenGLWidget(parent),
-camera_(QVector3D(0.0, 0.0, 5.0),
+camera_(QVector3D(5.0, 0.0, 0.0),
         QVector3D(0.0, 0.0, 0.0),
-        QVector3D(0.0, 1.0, 0.0)),
-scale_(1.0),
+        QVector3D(0.0, 0.0, 1.0)),
 view_(camera_.getViewMatrix()),
-data_ready_(false),
 show_edge_(false),
-toggle_edge_button_(new QPushButton(this)),
+shading_type_(SceneObject::SHADINGTYPE::SMOOTH),
+control_panel_(new GLViewControlPanel(this)),
 debug(DebugLogger("[OpenGL Widget]")),
 critical(FatalLogger("[OpenGL Widget]"))
 {
@@ -32,17 +30,7 @@ critical(FatalLogger("[OpenGL Widget]"))
   projection_.setToIdentity();
   this->setFocusPolicy(Qt::StrongFocus);
   this->setMouseTracking(false);
-
-  QVBoxLayout* layout = new QVBoxLayout(toggle_edge_button_);
-  QLabel* toggle_edge_icon = new QLabel(toggle_edge_button_);
-  toggle_edge_icon->setPixmap(QPixmap(":/images/topology.png"));
-  toggle_edge_icon->setScaledContents(true);
-  layout->addWidget(toggle_edge_icon);
-  toggle_edge_button_->setLayout(layout);
-  toggle_edge_button_->show();
-  toggle_edge_button_->raise();
-  toggle_edge_button_->setStyleSheet("QPushButton {border: none; background-color: none;} QLabel{border: none; background-color: none;}");
-  connect(toggle_edge_button_, &QPushButton::pressed, this, &OpenGLWidget::onToggleEdge);
+  connect(control_panel_, &GLViewControlPanel::action, this, &OpenGLWidget::onPanelAction);
 }
 
 OpenGLWidget::~OpenGLWidget()
@@ -52,9 +40,27 @@ OpenGLWidget::~OpenGLWidget()
   }
 }
 
+void OpenGLWidget::onPanelAction(int action) {
+  switch (action) {
+    case GLViewControlPanel::RESETCAM:
+      resetCamera();
+      break;
+    case GLViewControlPanel::TOGGLEEDGE:
+      onToggleEdge();
+      break;
+    case GLViewControlPanel::SMOOTHSHADING:
+      shading_type_ = SceneObject::SHADINGTYPE::SMOOTH;
+      break;
+    case GLViewControlPanel::FLATSHADING:
+      shading_type_ = SceneObject::SHADINGTYPE::FLAT;
+      break;
+  }
+  this->update();
+}
+
 void OpenGLWidget::resizeEvent(QResizeEvent *e) {
-  qreal scale = qApp->primaryScreen()->logicalDotsPerInch() / 96.0;
-  toggle_edge_button_->setGeometry(0, 0.5 * this->height(), 64 * scale, 64 * scale);
+  QSize cp_size = control_panel_->minimumSize();
+  control_panel_->setGeometry(0, 0.5 * (this->height() - cp_size.height()), cp_size.width(), cp_size.height());
   QOpenGLWidget::resizeEvent(e);
 }
 
@@ -70,7 +76,7 @@ void OpenGLWidget::wheelEvent(QWheelEvent* e) {
   if (e->inverted()) {
     positive = !positive;
   }
-  if (data_ready_) {
+  if (last_bbox_.validate()) {
     if (positive) {
       model_.scale(1.05);
     } else {
@@ -99,9 +105,9 @@ void OpenGLWidget::mouseMoveEvent(QMouseEvent *e)
 
   mouse_last_pos_ = e->pos();
 
-  this->update();
 
   QOpenGLWidget::mouseMoveEvent(e);
+  this->update();
 }
 
 void OpenGLWidget::keyPressEvent(QKeyEvent* e)
@@ -133,10 +139,44 @@ void OpenGLWidget::keyPressEvent(QKeyEvent* e)
   QOpenGLWidget::keyPressEvent(e);
 }
 
+void OpenGLWidget::alignCamera(BoundingBox b) {
+  last_bbox_ = b;
+  resetCamera();
+}
 
+void OpenGLWidget::resetCamera() {
+  double scale = 1.0;
+  double xc = last_bbox_.xc;
+  double yc = last_bbox_.yc;
+  double zc = last_bbox_.zc;
+  if (last_bbox_.validate()) {
+    camera_.setFocus(QVector3D(xc, yc, zc));
+    camera_.setPosition(QVector3D(xc, yc, zc) + QVector3D(5.0, 0.0, 0.0));
+    camera_.setUp(QVector3D(0.0, 0.0, 1.0));
+    double xr = (last_bbox_.xmax - last_bbox_.xmin) / 2.0;
+    double yr = (last_bbox_.ymax - last_bbox_.ymin) / 2.0;
+    double zr = (last_bbox_.zmax - last_bbox_.zmin) / 2.0;
+    double r = std::numeric_limits<double>::min();
+    r = std::max(r, xr);
+    r = std::max(r, yr);
+    r = std::max(r, zr);
+    if (r != 0) {
+      scale = 1.0 / r;
+    }
+  } else {
+    critical() << "Invalid Bounding box, reset camera to default";
+    camera_ = ArcballCamera{QVector3D(5.0, 0.0, 0.0),
+                            QVector3D(0.0, 0.0, 0.0),
+                            QVector3D(0.0, 0.0, 1.0)};
+  }
+  view_ = camera_.getViewMatrix();
+  model_.setToIdentity();
+  model_.scale(scale);
+  this->update();
+}
 void OpenGLWidget::initializeGL()
 {
-  qDebug() << "[OpenGL Widget] initializeGL()";
+  debug() << "initializeGL()";
   initializeOpenGLFunctions();
   QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
   f->glEnable(GL_CULL_FACE);
@@ -144,11 +184,12 @@ void OpenGLWidget::initializeGL()
   f->glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   scene_ptr_ = new TriangleMeshScene();
   scene_ptr_->init();
+  emit openglReady();
 }
 
 void OpenGLWidget::resizeGL(int w, int h)
 {
-  qDebug() << "[OpenGL Widget] resizeGL(" << w << ", " << h << ")";
+  debug() << "resizeGL(" << w << ", " << h << ")";
   if (this->context())
   {
     glViewport(0, 0,  w, h);
@@ -165,46 +206,36 @@ void OpenGLWidget::paintGL()
   f->glClear(GL_COLOR_BUFFER_BIT);
   f->glClear(GL_DEPTH_BUFFER_BIT);
 
-  if (data_ready_ && scene_ptr_) {
+  if (scene_ptr_) {
     scene_ptr_->renderEdge(show_edge_);
     scene_ptr_->setModelMat(model_);
     scene_ptr_->setViewMat(view_);
     scene_ptr_->setProjMat(projection_);
-    scene_ptr_->render();
+    scene_ptr_->render(shading_type_);
+  } else {
+    critical() << "Scene pointer is NULL";
   }
 }
 
+void OpenGLWidget::onBufferUpdated() {
+  this->update();
+}
 void OpenGLWidget::onToggleEdge() {
   show_edge_ = !show_edge_;
   this->update();
 }
-void OpenGLWidget::onDataReady(const QVector<float> &vpos, const QVector<float> &vnorms, const QVector<float> &vbcs)
-{
-  data_ready_ = !vpos.empty();
-  static_assert(sizeof(GLfloat) == sizeof(float));
-  scene_ptr_->allocateVboData(sizeof(GLfloat) * vpos.size(),
-                              TriangleMeshScene::VBO::POSITION);
-  scene_ptr_->updateVboData(0,
-                            vpos.data(),
-                            sizeof(GLfloat) * vpos.size(),
-                            TriangleMeshScene::VBO::POSITION);
 
-  scene_ptr_->allocateVboData(sizeof(GLfloat) * vnorms.size(),
-                              TriangleMeshScene::VBO::NORMAL);
-  scene_ptr_->updateVboData(0,
-                            vnorms.data(),
-                            sizeof(GLfloat) * vnorms.size(),
-                            TriangleMeshScene::VBO::NORMAL);
-
-  scene_ptr_->allocateVboData(sizeof(GLfloat) * vbcs.size(),
-                              TriangleMeshScene::VBO::BARYCENTRIC);
-  scene_ptr_->updateVboData(0,
-                            vbcs.data(),
-                            sizeof(GLfloat) * vbcs.size(),
-                            TriangleMeshScene::VBO::BARYCENTRIC);
-
-  scene_ptr_->setPrimitiveSize(vpos.size() / 3);
-
-  emit meshLoaded();
-  this->update();
+void OpenGLWidget::shareContextWith(ThreadedGLBufferUploader *uploader) {
+  debug() << "Share context with threaded uploader";
+  QOpenGLContext* ctx = context();
+  ctx->doneCurrent();
+  QOpenGLContext* shared = uploader->getContext();
+  shared->setFormat(ctx->format());
+  shared->setShareContext(ctx);
+  shared->create();
+  shared->moveToThread(uploader);
+  QOffscreenSurface* surface = uploader->getSurface();
+  surface->setFormat(ctx->format());
+  surface->create();
+  surface->moveToThread(uploader);
 }

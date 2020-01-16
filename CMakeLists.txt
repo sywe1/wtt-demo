@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5.0)
+cmake_minimum_required(VERSION 3.10.0)
 project(wtt-demo)
 
 message(STATUS "PATH: ${CMAKE_PREFIX_PATH}")
@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED true)
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   add_definitions("-frounding-math")
 endif()
+
+add_definitions(-DMESH_DATA_DIR=\"$ENV{HOME}/Dropbox/MEng/demo-meshes\")
 
 find_package(CGAL COMPONENTS Core)
 find_package(Qt5 COMPONENTS Gui Widgets OpenGL REQUIRED)
@@ -32,6 +34,9 @@ set(${MAINWINDOW}_SRC
     src/wtt_manager.cpp
     src/integer_setter.cpp
     src/input_prop.cpp
+    src/threaded_gl_buffer_uploader.cpp
+    src/control_panel.cpp
+    src/glview_control_panel.cpp
 )
 
 
@@ -47,6 +52,9 @@ qt5_wrap_cpp(${MAINWINDOW}_MOCS
               include/wtt_manager.hpp
               include/integer_setter.hpp
               include/input_prop.hpp
+              include/threaded_gl_buffer_uploader.hpp
+              include/control_panel.hpp
+              include/glview_control_panel.hpp
             )
 
 qt5_wrap_ui(${MAINWINDOW}_UIS
@@ -54,7 +62,9 @@ qt5_wrap_ui(${MAINWINDOW}_UIS
             uis/action_panel.ui
             uis/messagebox.ui
             uis/integer_setter.ui
-            uis/input_prop.ui)
+            uis/input_prop.ui
+            uis/control_panel.ui
+            uis/mesh_info_label.ui)
 
 qt5_add_resources(${MAINWINDOW}_RESOURCES
                   resources/resources.qrc)

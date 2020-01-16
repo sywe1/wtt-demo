@@ -85,6 +85,24 @@ public:
   }
 };
 
-Q_DECLARE_METATYPE(Mesh);
+struct BoundingBox {
+  double xmin = std::numeric_limits<double>::max();
+  double xmax = std::numeric_limits<double>::min();
+  double ymin = std::numeric_limits<double>::max();
+  double ymax = std::numeric_limits<double>::min();
+  double zmin = std::numeric_limits<double>::max();
+  double zmax = std::numeric_limits<double>::min();
 
+  double xc = 0.0;
+  double yc = 0.0;
+  double zc = 0.0;
+  int vsize = 0;
+  int fsize = 0;
+  bool validate() {
+    return (xmin < xmax) && (ymin < ymax) && (zmin < zmax);
+  }
+};
+
+Q_DECLARE_METATYPE(Mesh);
+Q_DECLARE_METATYPE(BoundingBox);
 #endif

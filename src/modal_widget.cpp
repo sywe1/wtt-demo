@@ -3,6 +3,7 @@
 #include <QEventLoop>
 #include <QList>
 #include <QPainter>
+#include <QDebug>
 
 ModalWidget::ModalWidget(QWidget* parent): QWidget(parent),
                                            opacity_(255),
@@ -24,7 +25,7 @@ void ModalWidget::done(int code) {
 }
 
 void ModalWidget::setBackgroundOpacity(uint opacity) {
-  opacity_ = opacity > 255 ? 255 : 0;
+  opacity_ = opacity > 255 ? 255 : opacity;
 }
 
 void ModalWidget::paintEvent(QPaintEvent *e) {

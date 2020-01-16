@@ -4,6 +4,8 @@
 #include <QDebug>
 #include <QFile>
 #include <QPushButton>
+#include <QScreen>
+#include <QApplication>
 
 IntegerSetter::IntegerSetter(QWidget* parent):
   ModalWidget(parent),
@@ -22,6 +24,10 @@ IntegerSetter::IntegerSetter(QWidget* parent):
   ui_ptr_->plus_icon->setScaledContents(true);
   ui_ptr_->minus_icon->setPixmap(QPixmap(":/images/minus.png"));
   ui_ptr_->minus_icon->setScaledContents(true);
+  qreal scale = qApp->primaryScreen()->logicalDotsPerInch() / 96.0;
+  ui_ptr_->minus_button->setFixedSize(QSize(36, 36) * scale);
+  ui_ptr_->plus_button->setFixedSize(QSize(36, 36) * scale);
+
 
   connect(ui_ptr_->minus_button, &QPushButton::clicked, this, &IntegerSetter::onSubtract);
   connect(ui_ptr_->plus_button, &QPushButton::clicked, this, &IntegerSetter::onAdd);
@@ -39,6 +45,16 @@ IntegerSetter::~IntegerSetter() {
 
 void IntegerSetter::setBodySize(const QSize &size) {
   ui_ptr_->msg_body->setMinimumSize(size);
+}
+
+void IntegerSetter::resetButtonSize(const QSize &size) {
+  for (int i = 0; i < ui_ptr_->buttons_layout->count(); ++i) {
+    QWidget* b = ui_ptr_->buttons_layout->itemAt(i)->widget();
+    if (!b) {
+      continue;
+    }
+    b->setFixedSize(size);
+  }
 }
 
 int IntegerSetter::getValue() {
