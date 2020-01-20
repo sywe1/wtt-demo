@@ -11,7 +11,8 @@ public:
     RESETCAM = 0,
     TOGGLEEDGE = 1,
     SMOOTHSHADING = 2,
-    FLATSHADING = 3
+    FLATSHADING = 3,
+    CAPTUREFRAME = 4
   };
   explicit GLViewControlPanel(QWidget* parent = 0);
   ~GLViewControlPanel();
@@ -23,5 +24,6 @@ public:
   QPushButton* reset_cam_button_;
   QPushButton* smooth_shading_button_;
   QPushButton* flat_shading_button_;
+  QPushButton* capture_button_;
 };
 #endif

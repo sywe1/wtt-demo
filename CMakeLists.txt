@@ -19,7 +19,7 @@ include_directories(
   include  
   ${wtlib_INCLUDE_DIRS})
 
-set(MAINWINDOW "create_mainwindow")
+set(MAINWINDOW "demo")
 
 set(${MAINWINDOW}_SRC
     src/main.cpp

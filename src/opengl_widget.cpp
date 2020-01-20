@@ -10,7 +10,7 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QOffscreenSurface>
-
+#include <QFileDialog>
 #include <cmath>
 #include <cassert>
 
@@ -21,6 +21,7 @@ camera_(QVector3D(5.0, 0.0, 0.0),
         QVector3D(0.0, 0.0, 1.0)),
 view_(camera_.getViewMatrix()),
 show_edge_(false),
+save_dialog_(new QFileDialog(this)),
 shading_type_(SceneObject::SHADINGTYPE::SMOOTH),
 control_panel_(new GLViewControlPanel(this)),
 debug(DebugLogger("[OpenGL Widget]")),
@@ -30,7 +31,12 @@ critical(FatalLogger("[OpenGL Widget]"))
   projection_.setToIdentity();
   this->setFocusPolicy(Qt::StrongFocus);
   this->setMouseTracking(false);
+
+  save_dialog_->setFileMode(QFileDialog::AnyFile);
+  save_dialog_->setDirectory("/home/sywe1");
+  save_dialog_->setAcceptMode(QFileDialog::AcceptSave);
   connect(control_panel_, &GLViewControlPanel::action, this, &OpenGLWidget::onPanelAction);
+  connect(save_dialog_, &QFileDialog::directoryEntered, this, &OpenGLWidget::onEnterDirectory);
 }
 
 OpenGLWidget::~OpenGLWidget()
@@ -54,6 +60,9 @@ void OpenGLWidget::onPanelAction(int action) {
     case GLViewControlPanel::FLATSHADING:
       shading_type_ = SceneObject::SHADINGTYPE::FLAT;
       break;
+    case GLViewControlPanel::CAPTUREFRAME:
+      onSaveImage();
+      return;
   }
   this->update();
 }
@@ -61,6 +70,7 @@ void OpenGLWidget::onPanelAction(int action) {
 void OpenGLWidget::resizeEvent(QResizeEvent *e) {
   QSize cp_size = control_panel_->minimumSize();
   control_panel_->setGeometry(0, 0.5 * (this->height() - cp_size.height()), cp_size.width(), cp_size.height());
+  debug() << "GL window geometry: " << this->mapToGlobal(this->geometry().topLeft());
   QOpenGLWidget::resizeEvent(e);
 }
 
@@ -202,7 +212,7 @@ void OpenGLWidget::resizeGL(int w, int h)
 void OpenGLWidget::paintGL()
 {
   QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
-  f->glClearColor(0.7, 0.7, 0.7, 0.7);
+  f->glClearColor(1.0, 1.0, 1.0, 1.0);
   f->glClear(GL_COLOR_BUFFER_BIT);
   f->glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -238,4 +248,20 @@ void OpenGLWidget::shareContextWith(ThreadedGLBufferUploader *uploader) {
   surface->setFormat(ctx->format());
   surface->create();
   surface->moveToThread(uploader);
+}
+
+
+void OpenGLWidget::onSaveImage() {
+  QImage f {this->grabFramebuffer()};
+  if (save_dialog_->exec()) {
+    QString file_path = save_dialog_->selectedFiles().first();
+    debug() << "Save frame to " << file_path;
+    f.save(file_path, "jpg", 100);
+  }
+  save_dialog_->setDirectory(last_save_dir_);
+}
+
+
+void OpenGLWidget::onEnterDirectory(const QString &path) {
+  last_save_dir_ = path;
 }

@@ -56,7 +56,7 @@ MainWindow::~MainWindow()
   wtt_manager_->exit(0);
   while (wtt_manager_->isRunning());
   delete wtt_manager_;
-  delete info_label_;
+  delete info_label_ui_;
   delete ui_ptr_;
 }
 
@@ -67,6 +67,7 @@ void MainWindow::initWidgets() {
   info_label_ui_->face_icon->setScaledContents(true);
   info_label_ui_->vertex_num->setText("");
   info_label_ui_->face_num->setText("");
+  info_label_->setStyleSheet("QLabel {color: black;}");
 
   proc_diag_ptr_->resetStyleSheet(":/qss/proc.qss");
   QLabel* proc_lable = proc_diag_ptr_->getDescription();
@@ -87,6 +88,7 @@ void MainWindow::initWidgets() {
 
 
   msg_prop_ptr_->addAcceptButton("Confirm");
+  msg_prop_ptr_->getDescription()->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
   msg_prop_ptr_->getDescription()->setWordWrap(true);
   msg_prop_ptr_->getDescription()->setAlignment(Qt::AlignCenter);
   msg_prop_ptr_->resetStyleSheet(":/qss/message_box.qss");
@@ -129,7 +131,7 @@ void MainWindow::initializeGeometry()
   denoise_level_setter_ptr_->resetButtonSize(QSize(128, 32) * scale);
   compress_rate_setter_ptr_->resetButtonSize(QSize(128, 32) * scale);
 
-  msg_prop_ptr_->setBodySize(QSize(350 * scale, 150 * scale));
+  msg_prop_ptr_->setBodySize(QSize(450 * scale, 150 * scale));
   proc_diag_ptr_->setBodySize(QSize(350 * scale, 350 * scale));
   wt_type_setter_ptr_->setBodySize(QSize(350 * scale, 150 * scale));
   fwt_level_setter_ptr_->setBodySize(QSize(350 * scale, 150 * scale));

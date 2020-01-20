@@ -18,6 +18,7 @@ class QOpenGLShaderProgram;
 class QMouseEvent;
 class QKeyEvent;
 class QPushButton;
+class QFileDialog;
 class OpenGLWidget: public QOpenGLWidget, public QOpenGLFunctions
 {
   Q_OBJECT
@@ -42,6 +43,10 @@ public slots:
 
   void onToggleEdge();
   void resetCamera();
+
+  void onSaveImage();
+
+  void onEnterDirectory(const QString& path);
   void onPanelAction(int);
 
 protected:
@@ -65,6 +70,8 @@ protected:
   GLViewControlPanel* control_panel_;
   QPointF mouse_last_pos_;
   bool show_edge_;
+  QString last_save_dir_;
+  QFileDialog* save_dialog_;
   SceneObject::SHADINGTYPE shading_type_;
   DebugLogger debug;
   FatalLogger critical;

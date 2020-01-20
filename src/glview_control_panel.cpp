@@ -10,7 +10,8 @@ ControlPanel(parent),
 reset_cam_button_(new QPushButton(this)),
 toggle_edge_button_(new QPushButton(this)),
 smooth_shading_button_(new QPushButton(this)),
-flat_shading_button_(new QPushButton(this))
+flat_shading_button_(new QPushButton(this)),
+capture_button_(new QPushButton(this))
 {
   QFile qss_file(":/qss/glview_control_panel.qss");
 
@@ -28,6 +29,7 @@ flat_shading_button_(new QPushButton(this))
   connect(toggle_edge_button_, &QPushButton::clicked, std::bind(&GLViewControlPanel::action, this, GLViewActions::TOGGLEEDGE));
   connect(smooth_shading_button_, &QPushButton::clicked, std::bind(&GLViewControlPanel::action, this, GLViewActions::SMOOTHSHADING));
   connect(flat_shading_button_, &QPushButton::clicked, std::bind(&GLViewControlPanel::action, this, GLViewActions::FLATSHADING));
+  connect(capture_button_, &QPushButton::clicked, std::bind(&GLViewControlPanel::action, this, GLViewActions::CAPTUREFRAME));
 }
 
 GLViewControlPanel::~GLViewControlPanel() {}
@@ -61,10 +63,18 @@ void GLViewControlPanel::initChildren() {
   smooth_shading_layout->addWidget(smooth_shading_icon);
   smooth_shading_button_->setLayout(smooth_shading_layout);
 
+  QVBoxLayout* capture_button_layout = new QVBoxLayout(capture_button_);
+  QLabel* capture_button_icon = new QLabel(capture_button_);
+  capture_button_icon->setPixmap(QPixmap(":/images/camera.png"));
+  capture_button_icon->setScaledContents(true);
+  capture_button_layout->addWidget(capture_button_icon);
+  capture_button_->setLayout(capture_button_layout);
+
   this->addButton(reset_cam_button_);
   this->addButton(toggle_edge_button_);
   this->addButton(smooth_shading_button_);
   this->addButton(flat_shading_button_);
+  this->addButton(capture_button_);
 }
 
 void GLViewControlPanel::initSize() {
@@ -73,5 +83,6 @@ void GLViewControlPanel::initSize() {
   toggle_edge_button_->setFixedSize(QSize(64, 64) * scale);
   smooth_shading_button_->setFixedSize(QSize(64, 64) * scale);
   flat_shading_button_->setFixedSize(QSize(64, 64) * scale);
+  capture_button_->setFixedSize(QSize(64, 64) * scale);
   this->setMinimumSize(QSize(64, 64 * 4) * scale);
 }

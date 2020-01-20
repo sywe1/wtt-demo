@@ -63,7 +63,7 @@ void ArcballCamera::drag(const QVector2D &mov)
 
   QVector3D axis(QVector3D::crossProduct(pos_ - focus_, dest));
 
-  qreal angle = std::asin( axis.length() / ((pos_ - focus_).length() * dest.length())) * 180.0 / M_PI;
+  qreal angle = std::asin( axis.length() / ((pos_ - focus_).length() * dest.length())) * 2 *180.0 / M_PI;
 
   axis.normalize();
 
